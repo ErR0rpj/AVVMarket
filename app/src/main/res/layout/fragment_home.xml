@@ -13,6 +13,14 @@
         android:paddingLeft="16dp"
         android:paddingTop="0dp"
         android:paddingRight="16dp"
-        android:paddingBottom="0dp"/>
+        android:paddingBottom="0dp">
+
+    </ListView>
+
+    <TextView
+        android:id="@+id/TVtrial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView" />
 
 </RelativeLayout>

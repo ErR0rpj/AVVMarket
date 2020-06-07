@@ -1,11 +1,14 @@
 package com.example.avvmarket.ui.home;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
@@ -17,6 +20,8 @@ import com.example.avvmarket.MainActivity;
 import com.example.avvmarket.R;
 import com.example.avvmarket.StocksAdapter;
 import com.example.avvmarket.StocksClass;
+import com.example.avvmarket.data.DBHelper;
+import com.example.avvmarket.data.DatabaseContract.StocksEntry;
 
 import java.util.ArrayList;
 
@@ -36,10 +41,48 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         adapter = new StocksAdapter(getActivity(), MainActivity.arlist);
         homeListView.setAdapter(adapter);
 
-        LoaderManager.getInstance(this).initLoader(1, null, this).forceLoad();
-        Log.e(LOG_TAG, "After initLoader()");
+        displayDatabaseInfo(view);
+
+        /*LoaderManager.getInstance(this).initLoader(1, null, this).forceLoad();
+        Log.e(LOG_TAG, "After initLoader()");*/
 
         return view;
+    }
+
+    void displayDatabaseInfo(View view){
+
+        DBHelper dbHelper = new DBHelper(getActivity());
+        TextView TVtrial = view.findViewById(R.id.TVtrial);
+        TVtrial.setText("Names:\n");
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        //Cursor cursor = db.rawQuery("Select * FROM "+ StocksEntry.TABLE_NAME,null);
+
+        String[] projection = {StocksEntry.COLUMN_NAME,
+        StocksEntry.COLUMN_CODE,
+        StocksEntry.COLUMN_STARTPRICE,
+        StocksEntry.COLUMN_CURRENTPRICE};
+        String sortOrder = StocksEntry.COLUMN_NAME + " ASC";
+
+        Cursor cursor = db.query(
+                StocksEntry.TABLE_NAME,
+                projection,
+                null,null,null,null,sortOrder);
+
+        try{
+
+            TVtrial.setText(String.valueOf(cursor.getCount()));
+
+            while(cursor.moveToNext()){
+                TVtrial.append(cursor.getString(0)+"\n");
+            }
+
+        }catch(Exception e){
+            Log.e(LOG_TAG, "displayDatabaseInfo: "+e.getMessage());
+        }
+        finally {
+            cursor.close();
+        }
     }
 
     private void updateUI(ArrayList<StocksClass> stocks){
@@ -55,7 +98,8 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     @Override
     public Loader<ArrayList<StocksClass>> onCreateLoader(int id, @Nullable Bundle args) {
         Log.e(LOG_TAG, "onCreateLoader()");
-        return new com.example.avvmarket.LoaderClass(getActivity());
+        return null;
+        //return new com.example.avvmarket.LoaderClass(getActivity());
     }
 
     @Override

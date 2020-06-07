@@ -34,6 +34,7 @@ public class LoaderClass extends AsyncTaskLoader<ArrayList<StocksClass>> {
             Log.e(LOG_TAG, "Thread error");
             e.printStackTrace();
         }
-        return Stocks.changeAllStocks();
+        return null;
+        //return Stocks.changeAllStocks();
     }
 }

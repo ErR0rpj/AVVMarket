@@ -8,7 +8,7 @@ import java.util.Random;
 
 public class Stocks {
 
-    /*public static ArrayList<StocksClass> arlist;
+    public static ArrayList<StocksClass> arlist;
 
     public ArrayList<StocksClass> getAllStocks(){
         StocksClass vin = new StocksClass(1,"Vinay Sir", "VIN_ad", 100, "Admin", 1000);
@@ -17,7 +17,7 @@ public class Stocks {
         arlist= new ArrayList<>();
         Collections.addAll(arlist,vin,bin,baga);
         return arlist;
-    }*/
+    }
 
     public static ArrayList<StocksClass> changeAllStocks(){
 
