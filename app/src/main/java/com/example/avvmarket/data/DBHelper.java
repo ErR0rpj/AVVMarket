@@ -27,10 +27,11 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         Log.e(LOG_TAG, "DBHelper onCreate initiating.");
         String SQL_CREATE_STOCKS_TABLE = "CREATE TABLE " +StocksEntry.TABLE_NAME +" ("
-                + StocksEntry.COLUMN_NAME +" TEXT NOT NULL, " +StocksEntry.COLUMN_CODE
-                +" TEXT PRIMARY KEY, " +StocksEntry.COLUMN_STARTPRICE +" INTEGER NOT NULL, "
+                +StocksEntry._ID +" INTEGER PRIMARY KEY AUTOINCREMENT, " +StocksEntry.COLUMN_NAME +" TEXT NOT NULL, " +StocksEntry.COLUMN_CODE
+                +" TEXT NOT NULL, " +StocksEntry.COLUMN_STARTPRICE +" INTEGER NOT NULL, "
                 +StocksEntry.COLUMN_CURRENTPRICE +" INTEGER, " +StocksEntry.COLUMN_GANG
-                +" INTEGER NOT NULL);";
+                +" INTEGER NOT NULL, " +StocksEntry.COLUMN_BUYPRICE +" INTEGER, "
+                +StocksEntry.COLUMN_ISBUY +" INTEGER NOT NULL DEFAULT 0);";
         Log.e(LOG_TAG, SQL_CREATE_STOCKS_TABLE);
 
         db.execSQL(SQL_CREATE_STOCKS_TABLE);
@@ -41,7 +42,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
     }
 
-    void insertStocks(SQLiteDatabase db){
+    private void insertStocks(SQLiteDatabase db){
         ArrayList<ContentValues> list = AllStocksDB.beginAllStocks();
         Log.e("DBHelper:", String.valueOf(list.size()));
 

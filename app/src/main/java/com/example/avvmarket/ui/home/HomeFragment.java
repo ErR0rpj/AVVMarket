@@ -49,7 +49,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         return view;
     }
 
-    void displayDatabaseInfo(View view){
+    private void displayDatabaseInfo(View view){
 
         DBHelper dbHelper = new DBHelper(getActivity());
         TextView TVtrial = view.findViewById(R.id.TVtrial);
@@ -74,7 +74,7 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
             TVtrial.setText(String.valueOf(cursor.getCount()));
 
             while(cursor.moveToNext()){
-                TVtrial.append(cursor.getString(0)+"\n");
+                TVtrial.append(cursor.getString(1)+"\n");
             }
 
         }catch(Exception e){
