@@ -11,7 +11,6 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.avvmarket.Stocks;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
 
 
@@ -57,6 +56,8 @@ public class StocksProvider extends ContentProvider {
                 throw new IllegalArgumentException("StocksProvider: Cannot query unknown URI " + uri);
         }
 
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
         return cursor;
     }
 
@@ -91,6 +92,9 @@ public class StocksProvider extends ContentProvider {
             default:
                 throw new IllegalArgumentException("update not working properly!");
         }
+
+        getContext().getContentResolver().notifyChange(uri, null);
+
         return rowsupdated;
     }
 

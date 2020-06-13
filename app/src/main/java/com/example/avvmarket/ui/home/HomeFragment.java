@@ -14,22 +14,21 @@ import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
-import com.example.avvmarket.MainActivity;
+import com.example.avvmarket.BoughtAdapterClass;
 import com.example.avvmarket.R;
-import com.example.avvmarket.StocksAdapter;
-import com.example.avvmarket.StocksClass;
+import com.example.avvmarket.StocksAdapterClass;
 import com.example.avvmarket.data.DBHelper;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
 
-import java.util.ArrayList;
-
-public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<ArrayList<StocksClass>> {
+public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private ListView homeListView;
-    private StocksAdapter adapter;
     private static final String LOG_TAG = HomeFragment.class.getSimpleName();
+    private StocksAdapterClass adapter;
+    private static int LOADER_CONSTANT = 1;
 
     @Nullable
     @Override
@@ -38,13 +37,13 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
         View view =inflater.inflate(R.layout.fragment_home,container,false);
         homeListView = view.findViewById(R.id.LISThome);
 
-        adapter = new StocksAdapter(getActivity(), MainActivity.arlist);
-        homeListView.setAdapter(adapter);
-
         displayDatabaseInfo(view);
 
-        /*LoaderManager.getInstance(this).initLoader(1, null, this).forceLoad();
-        Log.e(LOG_TAG, "After initLoader()");*/
+        adapter = new StocksAdapterClass(getActivity(), null);
+        homeListView.setAdapter(adapter);
+
+        LoaderManager.getInstance(this).initLoader(LOADER_CONSTANT, null, this).forceLoad();
+        Log.e(LOG_TAG, "After init loader");
 
         return view;
     }
@@ -52,13 +51,10 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     private void displayDatabaseInfo(View view){
 
         DBHelper dbHelper = new DBHelper(getActivity());
-        TextView TVtrial = view.findViewById(R.id.TVtrial);
-        TVtrial.setText("Names:\n");
 
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        //Cursor cursor = db.rawQuery("Select * FROM "+ StocksEntry.TABLE_NAME,null);
 
-        String[] projection = {StocksEntry.COLUMN_NAME,
+        /*String[] projection = {StocksEntry._ID, StocksEntry.COLUMN_NAME,
         StocksEntry.COLUMN_CODE,
         StocksEntry.COLUMN_STARTPRICE,
         StocksEntry.COLUMN_CURRENTPRICE};
@@ -69,51 +65,31 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 projection,
                 null,null,null,null,sortOrder);
 
-        try{
+        StocksAdapterClass adapter = new StocksAdapterClass(getActivity(), cursor);
+        homeListView.setAdapter(adapter);*/
 
-            TVtrial.setText(String.valueOf(cursor.getCount()));
-
-            while(cursor.moveToNext()){
-                TVtrial.append(cursor.getString(1)+"\n");
-            }
-
-        }catch(Exception e){
-            Log.e(LOG_TAG, "displayDatabaseInfo: "+e.getMessage());
-        }
-        finally {
-            cursor.close();
-        }
-    }
-
-    private void updateUI(ArrayList<StocksClass> stocks){
-        if(stocks==null || stocks.size()==0){
-            Log.e(LOG_TAG, "UpdateUI: stocks list is empty");
-            return;
-        }
-        adapter.clear();
-        adapter.addAll(MainActivity.arlist);
     }
 
     @NonNull
     @Override
-    public Loader<ArrayList<StocksClass>> onCreateLoader(int id, @Nullable Bundle args) {
-        Log.e(LOG_TAG, "onCreateLoader()");
-        return null;
-        //return new com.example.avvmarket.LoaderClass(getActivity());
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+
+        String[] projection = {StocksEntry._ID, StocksEntry.COLUMN_NAME,
+                StocksEntry.COLUMN_CODE,
+                StocksEntry.COLUMN_STARTPRICE,
+                StocksEntry.COLUMN_CURRENTPRICE};
+        String sortOrder = StocksEntry.COLUMN_NAME + " ASC";
+        return new CursorLoader(getActivity(), StocksEntry.CONTENT_URI, projection,
+                null, null, sortOrder);
     }
 
     @Override
-    public void onLoadFinished(@NonNull Loader<ArrayList<StocksClass>> loader, ArrayList<StocksClass> data) {
-        Log.e(LOG_TAG, "onLoadFinished()");
-        if(data==null || data.size()==0){
-            Log.e(LOG_TAG,"data is null");
-        }
-        updateUI(data);
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
     }
 
     @Override
-    public void onLoaderReset(@NonNull Loader<ArrayList<StocksClass>> loader) {
-        Log.e(LOG_TAG, "onLoaderReset");
-        updateUI(null);
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        adapter.swapCursor(null);
     }
 }

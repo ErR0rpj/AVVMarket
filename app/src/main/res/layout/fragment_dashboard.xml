@@ -39,19 +39,15 @@
 
     <ListView
         android:id="@+id/LISTportfolio"
-        android:layout_width="match_parent"
-        android:layout_height="572dp"
-        android:layout_alignParentStart="false"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
+        android:layout_width="412dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
         android:layout_marginStart="0dp"
-        android:layout_marginBottom="2dp"
+        android:layout_marginTop="150dp"
         android:clickable="true"
         android:focusable="true"
-        android:paddingLeft="12dp"
         android:paddingTop="0dp"
-        android:paddingRight="12dp"
-        android:paddingBottom="0dp" >
+        android:paddingBottom="0dp">
 
     </ListView>
 
@@ -62,5 +58,7 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_marginStart="34dp"
-        android:layout_marginTop="132dp" />
+        android:layout_marginTop="132dp"
+        android:clickable="true" />
+
 </RelativeLayout>

@@ -1,7 +1,6 @@
 package com.example.avvmarket;
 
 import android.os.Bundle;
-import android.widget.ListView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -11,23 +10,14 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import java.util.ArrayList;
-import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
-
-    public static ArrayList<StocksClass> arlist;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        StocksClass vin = new StocksClass(1,"Vinay Sir", "VIN_ad", 0, "Admin", 1000);
-        StocksClass bin = new StocksClass(2,"Bindu Mam", "BND_t", 0, "Teacher", 650);
-        StocksClass baga = new StocksClass(3,"Bagha","BAGA",0,"Others",488);
-        arlist= new ArrayList<>();
-        Collections.addAll(arlist,vin,bin,baga);
 
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each

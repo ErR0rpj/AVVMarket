@@ -12,38 +12,49 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
 
+import com.example.avvmarket.BoughtAdapterClass;
 import com.example.avvmarket.R;
-import com.example.avvmarket.Stocks;
+import com.example.avvmarket.StocksAdapterClass;
 import com.example.avvmarket.data.DBHelper;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
 
-public class DashboardFragment extends Fragment {
+public class DashboardFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
+    private static final int LOADER_CONSTANT = 0;
+    private BoughtAdapterClass adapter;
     private static final String LOG_TAG = DashboardFragment.class.getSimpleName();
     private Button BTNbuy;
     private Button BTNsell;
     private EditText ETtofind;
     private DBHelper mdbHelper;
     private TextView textView;
+    //private TextView TVwhenempty;
+    private ListView listportfolio;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
         View view =inflater.inflate(R.layout.fragment_dashboard,container,false);
-        //isplayDatabaseInfo(view);
+        //displayDatabaseInfo(view);
 
         textView = view.findViewById(R.id.textView);
         BTNbuy = view.findViewById(R.id.BTNbuy);
         BTNsell = view.findViewById(R.id.BTNsell);
         ETtofind = view.findViewById(R.id.ETtofind);
+        //TVwhenempty = view.findViewById(R.id.TVwhenempty);
+        listportfolio = view.findViewById(R.id.LISTportfolio);
 
         mdbHelper = new DBHelper(getActivity());
 
@@ -132,7 +143,7 @@ public class DashboardFragment extends Fragment {
                         Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
                     }
                 }
-
+                ETtofind.getText().clear();
                 cursor.close();
             }
         });
@@ -176,39 +187,42 @@ public class DashboardFragment extends Fragment {
                         Toast.makeText(getActivity(),cursor.getString(1) + " Sold successfully!",Toast.LENGTH_LONG).show();
                     }
                 }
+                ETtofind.getText().clear();
+                cursor.close();
 
             }
         });
 
+        adapter = new BoughtAdapterClass(getActivity(), null);
+        listportfolio.setAdapter(adapter);
+
+        LoaderManager.getInstance(this).initLoader(LOADER_CONSTANT, null, this).forceLoad();
+        Log.e(LOG_TAG, "After init loader");
+
         return view;
     }
 
-    private void displayDatabaseInfo(View view){
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
 
-        String[] projection = {
-                StocksEntry._ID,
-                StocksEntry.COLUMN_NAME,
-                StocksEntry.COLUMN_STARTPRICE,
-                StocksEntry.COLUMN_ISBUY
-        };
-        String sortOrder = StocksEntry.COLUMN_NAME + " ASC";
-        String selection = StocksEntry.COLUMN_ISBUY + "==1";
+        String[] projection = {StocksEntry._ID, StocksEntry.COLUMN_CODE,
+                StocksEntry.COLUMN_NAME, StocksEntry.COLUMN_CURRENTPRICE,
+                StocksEntry.COLUMN_BUYPRICE, StocksEntry.COLUMN_ISBUY};
+        String selection = StocksEntry.COLUMN_ISBUY + "=1";
+        String sortOrder = StocksEntry.COLUMN_CODE + " ASC";
 
-        Cursor cursor = getActivity().getContentResolver().query(StocksEntry.CONTENT_URI, projection,
-                selection, null, sortOrder);
-
-        try{
-            textView.setText(String.valueOf(cursor.getCount()));
-            while(cursor.moveToNext()){
-                textView.append(cursor.getString(0)+"\n");
-            }
-
-        }catch(Exception e){
-            Log.e(LOG_TAG, "displayDatabaseInfo: "+e.getMessage());
-        }
-        finally {
-            cursor.close();
-        }
+        return new CursorLoader(getActivity(), StocksEntry.CONTENT_URI, projection, selection,
+                null, sortOrder);
     }
 
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        adapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+        adapter.swapCursor(null);
+    }
 }
