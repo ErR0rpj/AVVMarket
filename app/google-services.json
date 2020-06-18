@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "553876760761",
+    "firebase_url": "https://avvmarket-6d746.firebaseio.com",
+    "project_id": "avvmarket-6d746",
+    "storage_bucket": "avvmarket-6d746.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:553876760761:android:78a4c39fb3b6e552a1d368",
+        "android_client_info": {
+          "package_name": "com.example.avvmarket"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "553876760761-726mui16vf6636gcmlhg2dqnvkbthvvg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2pqosOZvv92A2woZrEeJ8w51CRVL6SC4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "553876760761-726mui16vf6636gcmlhg2dqnvkbthvvg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
