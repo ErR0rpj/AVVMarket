@@ -1,8 +1,11 @@
 package com.example.avvmarket.ui.dashboard;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -24,9 +27,7 @@ import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
 import com.example.avvmarket.BoughtAdapterClass;
-import com.example.avvmarket.MainActivity;
 import com.example.avvmarket.R;
-import com.example.avvmarket.StocksAdapterClass;
 import com.example.avvmarket.StocksOwnDetails;
 import com.example.avvmarket.data.DBHelper;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
@@ -120,148 +121,169 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
         BTNbuy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                search = ETtofind.getText().toString().trim();
-                search = search.toUpperCase();
-                SQLiteDatabase db = mdbHelper.getReadableDatabase();
-                String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
-                StocksEntry.COLUMN_CURRENTPRICE,StocksEntry.COLUMN_ISBUY};
+                ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-                cursor = db.rawQuery("SELECT " + StocksEntry.COLUMN_CODE + "," +
-                        StocksEntry.COLUMN_NAME + "," + StocksEntry.COLUMN_CURRENTPRICE + ","
-                        + StocksEntry.COLUMN_ISBUY + " FROM "
-                        + StocksEntry.TABLE_NAME + " WHERE " + StocksEntry.COLUMN_CODE
-                        + "='" + search + "';",null);
-                //Log.e(LOG_TAG,"Column Count = "+ cursor.getColumnCount());
+                Log.e(LOG_TAG, "isConnected = " + isConnected);
 
-                if(cursor.getCount()!=1){
-                    Toast.makeText(getActivity(),"Please, enter a valid code!", Toast.LENGTH_SHORT).show();
+                if (!isConnected) {
+                    Toast.makeText(getActivity(), "No Internet Connection!", Toast.LENGTH_SHORT).show();
                 }
-                else if(cursor.moveToNext()) {
-                    if (cursor.getInt(3) == 1) {
-                        Toast.makeText(getActivity(), "This Stock is already Owned by you!", Toast.LENGTH_LONG).show();
-                    }
-                    else {
 
-                        mFirebaseDatabase = FirebaseDatabase.getInstance();
-                        mDatabaseReference = mFirebaseDatabase.getReference();
+                else {
 
-                        mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    search = ETtofind.getText().toString().trim();
+                    search = search.toUpperCase();
+                    SQLiteDatabase db = mdbHelper.getReadableDatabase();
+                    String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
+                            StocksEntry.COLUMN_CURRENTPRICE, StocksEntry.COLUMN_ISBUY};
 
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                boughtprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
-                                funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
-                                Log.e(LOG_TAG, "In BTNbuy currentprice retrieved " + boughtprice);
-                                Log.e(LOG_TAG, "In BTNbuy funds retrieved " + funds);
+                    cursor = db.rawQuery("SELECT " + StocksEntry.COLUMN_CODE + "," +
+                            StocksEntry.COLUMN_NAME + "," + StocksEntry.COLUMN_CURRENTPRICE + ","
+                            + StocksEntry.COLUMN_ISBUY + " FROM "
+                            + StocksEntry.TABLE_NAME + " WHERE " + StocksEntry.COLUMN_CODE
+                            + "='" + search + "';", null);
+                    //Log.e(LOG_TAG,"Column Count = "+ cursor.getColumnCount());
 
-                                if(funds >= boughtprice && boughtprice > 0) {
-                                    funds = funds - boughtprice;
-                                    m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
-                                    m2databaseReference.child("funds").setValue(funds);
+                    if (cursor.getCount() != 1) {
+                        Toast.makeText(getActivity(), "Please, enter a valid code!", Toast.LENGTH_SHORT).show();
+                    } else if (cursor.moveToNext()) {
+                        if (cursor.getInt(3) == 1) {
+                            Toast.makeText(getActivity(), "This Stock is already Owned by you!", Toast.LENGTH_LONG).show();
+                        } else {
 
-                                    StocksOwnDetails sod = new StocksOwnDetails(search, boughtprice);
-                                    mDatabaseReference = mFirebaseDatabase.getReference().child("users").child(uid).child("stocksown").child(search);
-                                    mDatabaseReference.setValue(sod);
+                            mFirebaseDatabase = FirebaseDatabase.getInstance();
+                            mDatabaseReference = mFirebaseDatabase.getReference();
 
-                                    String selection = StocksEntry.COLUMN_CODE + "=?";
-                                    String[] selectionargs = {search};
+                            mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
 
-                                    ContentValues values = new ContentValues();
-                                    values.put(StocksEntry.COLUMN_ISBUY, 1);
-                                    values.put(StocksEntry.COLUMN_BUYPRICE, boughtprice);
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    boughtprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
+                                    funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
+                                    Log.e(LOG_TAG, "In BTNbuy currentprice retrieved " + boughtprice);
+                                    Log.e(LOG_TAG, "In BTNbuy funds retrieved " + funds);
 
-                                    int updatedrows;
-                                    updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
-                                            values, selection, selectionargs);
-                                    Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+                                    if (funds >= boughtprice && boughtprice > 0) {
+                                        funds = funds - boughtprice;
+                                        m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
+                                        m2databaseReference.child("funds").setValue(funds);
 
-                                    Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
+                                        StocksOwnDetails sod = new StocksOwnDetails(search, boughtprice);
+                                        mDatabaseReference = mFirebaseDatabase.getReference().child("users").child(uid).child("stocksown").child(search);
+                                        mDatabaseReference.setValue(sod);
+
+                                        String selection = StocksEntry.COLUMN_CODE + "=?";
+                                        String[] selectionargs = {search};
+
+                                        ContentValues values = new ContentValues();
+                                        values.put(StocksEntry.COLUMN_ISBUY, 1);
+                                        values.put(StocksEntry.COLUMN_BUYPRICE, boughtprice);
+
+                                        int updatedrows;
+                                        updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
+                                                values, selection, selectionargs);
+                                        Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+
+                                        Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
+                                    } else {
+                                        Toast.makeText(getActivity(), "You do not have enough funds to buy this stock", Toast.LENGTH_LONG).show();
+                                    }
                                 }
-                                else{
-                                    Toast.makeText(getActivity(), "You do not have enough funds to buy this stock", Toast.LENGTH_LONG).show();
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+                                    Log.e(LOG_TAG, "cancelled currentprice retrieving");
                                 }
-                            }
+                            });
 
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-                                Log.e(LOG_TAG, "cancelled currentprice retrieving");
-                            }
-                        });
-
+                        }
                     }
+                    ETtofind.getText().clear();
                 }
-                ETtofind.getText().clear();
             }
         });
 
         BTNsell.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                search = ETtofind.getText().toString().trim();
-                search = search.toUpperCase();
-                final Cursor cursor;
-                String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
-                StocksEntry.COLUMN_CURRENTPRICE, StocksEntry.COLUMN_ISBUY};
-                selection = StocksEntry.COLUMN_CODE + "=?";
-                selectionArgs[0] = search;
+                ConnectivityManager cm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
 
-                cursor = getActivity().getContentResolver().query(StocksEntry.CONTENT_URI,
-                        projection, selection, selectionArgs, null);
-                //Log.e(LOG_TAG, "Column Count = " + cursor.getColumnCount());
+                Log.e(LOG_TAG, "isConnected = " + isConnected);
 
-                if(cursor.getCount()!=1){
-                    Toast.makeText(getActivity(), "Please, Enter a valid code", Toast.LENGTH_SHORT).show();
+                if (!isConnected) {
+                    Toast.makeText(getActivity(), "No Internet Connection!", Toast.LENGTH_SHORT).show();
                 }
-                else if(cursor.moveToNext()){
-                    if(cursor.getInt(3) == 0){
-                        Toast.makeText(getActivity(), "You do not own this stock!", Toast.LENGTH_LONG).show();
+
+                else {
+
+                    search = ETtofind.getText().toString().trim();
+                    search = search.toUpperCase();
+                    final Cursor cursor;
+                    String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
+                            StocksEntry.COLUMN_CURRENTPRICE, StocksEntry.COLUMN_ISBUY};
+                    selection = StocksEntry.COLUMN_CODE + "=?";
+                    selectionArgs[0] = search;
+
+                    cursor = getActivity().getContentResolver().query(StocksEntry.CONTENT_URI,
+                            projection, selection, selectionArgs, null);
+                    //Log.e(LOG_TAG, "Column Count = " + cursor.getColumnCount());
+
+                    if (cursor.getCount() != 1) {
+                        Toast.makeText(getActivity(), "Please, Enter a valid code", Toast.LENGTH_SHORT).show();
+                    } else if (cursor.moveToNext()) {
+                        if (cursor.getInt(3) == 0) {
+                            Toast.makeText(getActivity(), "You do not own this stock!", Toast.LENGTH_LONG).show();
+                        } else {
+
+                            mFirebaseDatabase = FirebaseDatabase.getInstance();
+                            mDatabaseReference = mFirebaseDatabase.getReference();
+
+                            mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                    curprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
+                                    funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
+                                    Log.e(LOG_TAG, "In BTNsell currentprice retrieved " + curprice);
+                                    Log.e(LOG_TAG, "In BTNsell funds retrieved " + funds);
+
+                                    funds += curprice;
+                                    m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
+                                    m2databaseReference.child("funds").setValue(funds);
+
+                                    m2databaseReference.child("stocksown").child(search).setValue(null);
+
+                                    int curprice = cursor.getInt(2);
+                                    funds = funds + curprice;
+
+                                    String selection2 = StocksEntry.COLUMN_CODE + "=?";
+
+                                    ContentValues values = new ContentValues();
+                                    values.put(StocksEntry.COLUMN_ISBUY, 0);
+
+                                    int updatedrows;
+                                    updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
+                                            values, selection2, selectionArgs);
+                                    Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+
+                                    Toast.makeText(getActivity(), cursor.getString(1) + " Sold successfully!", Toast.LENGTH_LONG).show();
+
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+
+                        }
                     }
-                    else{
-
-                        mFirebaseDatabase = FirebaseDatabase.getInstance();
-                        mDatabaseReference = mFirebaseDatabase.getReference();
-
-                        mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                                curprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
-                                funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
-                                Log.e(LOG_TAG, "In BTNsell currentprice retrieved " + curprice);
-                                Log.e(LOG_TAG, "In BTNsell funds retrieved " + funds);
-
-                                funds += curprice;
-                                m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
-                                m2databaseReference.child("funds").setValue(funds);
-
-                                m2databaseReference.child("stocksown").child(search).setValue(null);
-
-                                int curprice = cursor.getInt(2);
-                                funds = funds+ curprice;
-
-                                String selection2 = StocksEntry.COLUMN_CODE + "=?";
-
-                                ContentValues values = new ContentValues();
-                                values.put(StocksEntry.COLUMN_ISBUY, 0);
-
-                                int updatedrows;
-                                updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
-                                        values, selection2, selectionArgs);
-                                Log.e(LOG_TAG, "Rows updated:" + updatedrows);
-
-                                Toast.makeText(getActivity(),cursor.getString(1) + " Sold successfully!",Toast.LENGTH_LONG).show();
-
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                            }
-                        });
-
-                    }
+                    ETtofind.getText().clear();
                 }
-                ETtofind.getText().clear();
             }
         });
 
