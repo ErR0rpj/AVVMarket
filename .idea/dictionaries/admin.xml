@@ -2,6 +2,7 @@
   <dictionary name="admin">
     <words>
       <w>currentprice</w>
+      <w>retreiving</w>
       <w>rowsupdated</w>
     </words>
   </dictionary>

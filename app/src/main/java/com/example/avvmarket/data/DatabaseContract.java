@@ -15,8 +15,6 @@ public final class DatabaseContract {
 
         public static final Uri CONTENT_URI = Uri.withAppendedPath(BASE_CONTENT_URI, PATH_DB);
 
-        public static int FUND = 15000;
-
         public static final String TABLE_NAME = "stocks";
         public static final String _ID = "_id";
         public static final String COLUMN_NAME = "name";

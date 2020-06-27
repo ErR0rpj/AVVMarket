@@ -24,10 +24,20 @@ import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
 import com.example.avvmarket.BoughtAdapterClass;
+import com.example.avvmarket.MainActivity;
 import com.example.avvmarket.R;
 import com.example.avvmarket.StocksAdapterClass;
+import com.example.avvmarket.StocksOwnDetails;
 import com.example.avvmarket.data.DBHelper;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import static com.example.avvmarket.MainActivity.funds;
+import static com.example.avvmarket.MainActivity.uid;
 
 public class DashboardFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -42,6 +52,17 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
     //private TextView TVwhenempty;
     private ListView listportfolio;
 
+    public static FirebaseDatabase mFirebaseDatabase;
+    public static DatabaseReference mDatabaseReference;
+    public static DatabaseReference m2databaseReference;
+
+    private static int boughtprice ;
+    private static int curprice;
+    private static String selection;
+    private static String[] selectionArgs = {""};
+    private static String search;
+    private Cursor cursor;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -53,7 +74,6 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
         BTNbuy = view.findViewById(R.id.BTNbuy);
         BTNsell = view.findViewById(R.id.BTNsell);
         ETtofind = view.findViewById(R.id.ETtofind);
-        //TVwhenempty = view.findViewById(R.id.TVwhenempty);
         listportfolio = view.findViewById(R.id.LISTportfolio);
 
         mdbHelper = new DBHelper(getActivity());
@@ -100,9 +120,8 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
         BTNbuy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String search = ETtofind.getText().toString().trim();
+                search = ETtofind.getText().toString().trim();
                 search = search.toUpperCase();
-                Cursor cursor;
                 SQLiteDatabase db = mdbHelper.getReadableDatabase();
                 String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
                 StocksEntry.COLUMN_CURRENTPRICE,StocksEntry.COLUMN_ISBUY};
@@ -121,43 +140,70 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
                     if (cursor.getInt(3) == 1) {
                         Toast.makeText(getActivity(), "This Stock is already Owned by you!", Toast.LENGTH_LONG).show();
                     }
-                    else if (cursor.getInt(2) > StocksEntry.FUND) {
-                        Toast.makeText(getActivity(), "You do not have enough funds in your account", Toast.LENGTH_LONG).show();
-                    }
                     else {
-                        int curprice = cursor.getInt(2);
-                        StocksEntry.FUND = StocksEntry.FUND - curprice;
 
-                        String selection = StocksEntry.COLUMN_CODE + "=?";
-                        String[] selectionargs = {search};
+                        mFirebaseDatabase = FirebaseDatabase.getInstance();
+                        mDatabaseReference = mFirebaseDatabase.getReference();
 
-                        ContentValues values = new ContentValues();
-                        values.put(StocksEntry.COLUMN_ISBUY, 1);
-                        values.put(StocksEntry.COLUMN_BUYPRICE, curprice);
+                        mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
 
-                        int updatedrows;
-                        updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
-                                values, selection, selectionargs);
-                        Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                boughtprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
+                                funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
+                                Log.e(LOG_TAG, "In BTNbuy currentprice retrieved " + boughtprice);
+                                Log.e(LOG_TAG, "In BTNbuy funds retrieved " + funds);
 
-                        Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
+                                if(funds >= boughtprice && boughtprice > 0) {
+                                    funds = funds - boughtprice;
+                                    m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
+                                    m2databaseReference.child("funds").setValue(funds);
+
+                                    StocksOwnDetails sod = new StocksOwnDetails(search, boughtprice);
+                                    mDatabaseReference = mFirebaseDatabase.getReference().child("users").child(uid).child("stocksown").child(search);
+                                    mDatabaseReference.setValue(sod);
+
+                                    String selection = StocksEntry.COLUMN_CODE + "=?";
+                                    String[] selectionargs = {search};
+
+                                    ContentValues values = new ContentValues();
+                                    values.put(StocksEntry.COLUMN_ISBUY, 1);
+                                    values.put(StocksEntry.COLUMN_BUYPRICE, boughtprice);
+
+                                    int updatedrows;
+                                    updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
+                                            values, selection, selectionargs);
+                                    Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+
+                                    Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
+                                }
+                                else{
+                                    Toast.makeText(getActivity(), "You do not have enough funds to buy this stock", Toast.LENGTH_LONG).show();
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+                                Log.e(LOG_TAG, "cancelled currentprice retrieving");
+                            }
+                        });
+
                     }
                 }
                 ETtofind.getText().clear();
-                cursor.close();
             }
         });
 
         BTNsell.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String search = ETtofind.getText().toString().trim();
+                search = ETtofind.getText().toString().trim();
                 search = search.toUpperCase();
-                Cursor cursor;
+                final Cursor cursor;
                 String[] projection = {StocksEntry.COLUMN_CODE, StocksEntry.COLUMN_NAME,
                 StocksEntry.COLUMN_CURRENTPRICE, StocksEntry.COLUMN_ISBUY};
-                String selection = StocksEntry.COLUMN_CODE + "=?";
-                String[] selectionArgs = {search};
+                selection = StocksEntry.COLUMN_CODE + "=?";
+                selectionArgs[0] = search;
 
                 cursor = getActivity().getContentResolver().query(StocksEntry.CONTENT_URI,
                         projection, selection, selectionArgs, null);
@@ -171,25 +217,51 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
                         Toast.makeText(getActivity(), "You do not own this stock!", Toast.LENGTH_LONG).show();
                     }
                     else{
-                        int curprice = cursor.getInt(2);
-                        StocksEntry.FUND = StocksEntry.FUND + curprice;
 
-                        String selection2 = StocksEntry.COLUMN_CODE + "=?";
+                        mFirebaseDatabase = FirebaseDatabase.getInstance();
+                        mDatabaseReference = mFirebaseDatabase.getReference();
 
-                        ContentValues values = new ContentValues();
-                        values.put(StocksEntry.COLUMN_ISBUY, 0);
+                        mDatabaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                        int updatedrows;
-                        updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
-                                values, selection2, selectionArgs);
-                        Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+                                curprice = dataSnapshot.child("stocks").child(search).child("currentprice").getValue(Integer.class);
+                                funds = dataSnapshot.child("users").child(uid).child("funds").getValue(Integer.class);
+                                Log.e(LOG_TAG, "In BTNsell currentprice retrieved " + curprice);
+                                Log.e(LOG_TAG, "In BTNsell funds retrieved " + funds);
 
-                        Toast.makeText(getActivity(),cursor.getString(1) + " Sold successfully!",Toast.LENGTH_LONG).show();
+                                funds += curprice;
+                                m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
+                                m2databaseReference.child("funds").setValue(funds);
+
+                                m2databaseReference.child("stocksown").child(search).setValue(null);
+
+                                int curprice = cursor.getInt(2);
+                                funds = funds+ curprice;
+
+                                String selection2 = StocksEntry.COLUMN_CODE + "=?";
+
+                                ContentValues values = new ContentValues();
+                                values.put(StocksEntry.COLUMN_ISBUY, 0);
+
+                                int updatedrows;
+                                updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
+                                        values, selection2, selectionArgs);
+                                Log.e(LOG_TAG, "Rows updated:" + updatedrows);
+
+                                Toast.makeText(getActivity(),cursor.getString(1) + " Sold successfully!",Toast.LENGTH_LONG).show();
+
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+
                     }
                 }
                 ETtofind.getText().clear();
-                cursor.close();
-
             }
         });
 

@@ -54,7 +54,7 @@ public class AllStocksDB {
         list.add(values);
 
         values = new ContentValues();
-        values.put(DatabaseContract.StocksEntry.COLUMN_NAME, "हिन्दी सिनेमा");
+        values.put(DatabaseContract.StocksEntry.COLUMN_NAME, "Anas Sir");
         values.put(DatabaseContract.StocksEntry.COLUMN_CODE, "ANAS_X");
         values.put(DatabaseContract.StocksEntry.COLUMN_STARTPRICE, 600);
         values.put(DatabaseContract.StocksEntry.COLUMN_CURRENTPRICE, 600);
