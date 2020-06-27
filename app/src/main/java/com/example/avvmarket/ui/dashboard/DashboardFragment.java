@@ -118,6 +118,13 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
             }
         });
 
+        textView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ETtofind.setText(textView.getText());
+            }
+        });
+
         BTNbuy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
