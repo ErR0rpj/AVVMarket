@@ -1,6 +1,7 @@
 package com.example.avvmarket;
 
 import android.content.Context;
+import java.text.DecimalFormat;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -12,6 +13,8 @@ import android.widget.TextView;
 import com.example.avvmarket.data.DatabaseContract.StocksEntry;
 
 public class BoughtAdapterClass extends CursorAdapter {
+
+    private static DecimalFormat df = new DecimalFormat("0.00");
 
     public BoughtAdapterClass(Context context, Cursor c) {
         super(context, c, 0);
@@ -43,7 +46,7 @@ public class BoughtAdapterClass extends CursorAdapter {
         int currentprice = cursor.getInt(currentpriceColumnIndex);
         int buyprice = cursor.getInt(buypriceColumnIndex);
         int change = currentprice - buyprice;
-        double pcntchange =(double)((change/buyprice)*100);
+        double pcntchange =(((double)change/(double)buyprice)*100);
 
         if(change<0){
             TVchange.setTextColor(Color.RED);
@@ -61,7 +64,7 @@ public class BoughtAdapterClass extends CursorAdapter {
         TVchange.setText(change + ".00");
         TVname.setText(name);
         TVstartprice.setText("Buy: " + buyprice + ".00");
-        String pcntschange = pcntchange + "%";
+        String pcntschange = df.format(pcntchange) + "%";
         TVpcntchange.setText(pcntschange);
 
     }

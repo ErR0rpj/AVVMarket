@@ -1,6 +1,8 @@
 package com.example.avvmarket;
 
 import android.app.Activity;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 public class StocksAdapterClass extends ArrayAdapter<StocksFirebaseColumns> {
 
     private final String LOG_TAG =StocksAdapterClass.class.getSimpleName();
+    private static DecimalFormat df = new DecimalFormat("0.00");
 
     public StocksAdapterClass(Activity context, ArrayList<StocksFirebaseColumns> list){
         super(context, 0, list);
@@ -61,7 +64,7 @@ public class StocksAdapterClass extends ArrayAdapter<StocksFirebaseColumns> {
         String name = currentListItem.getName();
         int startprice = currentListItem.getStartprice();
         int change = currentprice - startprice;
-        double pcntchange =(double)((change/startprice)*100);
+        double pcntchange =(((double)change/(double)startprice)*100);
 
         if(change<0){
             TVchange.setTextColor(Color.RED);
@@ -79,7 +82,7 @@ public class StocksAdapterClass extends ArrayAdapter<StocksFirebaseColumns> {
         TVchange.setText(change + ".00");
         TVname.setText(name);
         TVstartprice.setText("Open: " + startprice + ".00");
-        String pcntschange = pcntchange + "%";
+        String pcntschange = df.format(pcntchange) + "%";
         TVpcntchange.setText(pcntschange);
 
         return listItemView;

@@ -1,5 +1,7 @@
 package com.example.avvmarket.ui.home;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -9,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -30,6 +31,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 
 public class HomeFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
@@ -38,6 +41,8 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
     private static final String LOG_TAG = HomeFragment.class.getSimpleName();
     private StocksAdapterClass adapter;
     private static int LOADER_CONSTANT = 1;
+
+    private static  DecimalFormat df = new DecimalFormat("0.00");
 
     public static FirebaseDatabase mFirebaseDatabase;
     public static DatabaseReference mDatabaseReference;
@@ -73,9 +78,10 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                 int currentprice = sfc.getCurrentprice();
                 int startprice = sfc.getStartprice();
                 int change = currentprice - startprice;
-                double pcntchange =(double)((change/startprice)*100);
+                double pcntchange =(((double)change/(double)startprice)*100);
 
-                View v = homeListView.getChildAt(homeListView.getFirstVisiblePosition() + index -1);
+
+                View v = homeListView.getChildAt(index - homeListView.getFirstVisiblePosition());
 
                 if(v == null){
                     Log.e(LOG_TAG, "view in change is null");
@@ -98,7 +104,8 @@ public class HomeFragment extends Fragment implements LoaderManager.LoaderCallba
                     TVcolor.setBackgroundColor(0xFF00FF00);
                 }
 
-                String pcntschange = pcntchange + "%";
+                String pcntschange = df.format(pcntchange) + "%";
+                Log.e(LOG_TAG, pcntchange + "");
                 TVpcntchange.setText(pcntschange);
                 TVcurrentprice.setText(currentprice + ".00");
                 TVchange.setText(change + ".00");

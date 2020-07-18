@@ -1,6 +1,8 @@
 package com.example.avvmarket.ui.dashboard;
 
 import android.content.ContentValues;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -37,6 +39,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.DecimalFormat;
+
 import static com.example.avvmarket.MainActivity.funds;
 import static com.example.avvmarket.MainActivity.uid;
 
@@ -57,6 +61,7 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
     public static DatabaseReference mDatabaseReference;
     public static DatabaseReference m2databaseReference;
 
+    private static DecimalFormat df = new DecimalFormat("0.00");
     private static int boughtprice ;
     private static int curprice;
     private static String selection;
@@ -177,6 +182,9 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
                                         m2databaseReference = mFirebaseDatabase.getReference().child("users").child(uid);
                                         m2databaseReference.child("funds").setValue(funds);
 
+                                        m2databaseReference = mFirebaseDatabase.getReference().child("stocks");
+                                        m2databaseReference.child(search).child("buycount").setValue(boughtprice);
+
                                         StocksOwnDetails sod = new StocksOwnDetails(search, boughtprice);
                                         mDatabaseReference = mFirebaseDatabase.getReference().child("users").child(uid).child("stocksown").child(search);
                                         mDatabaseReference.setValue(sod);
@@ -187,13 +195,14 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
                                         ContentValues values = new ContentValues();
                                         values.put(StocksEntry.COLUMN_ISBUY, 1);
                                         values.put(StocksEntry.COLUMN_BUYPRICE, boughtprice);
+                                        values.put(StocksEntry.COLUMN_CURRENTPRICE, boughtprice);
 
                                         int updatedrows;
                                         updatedrows = getActivity().getContentResolver().update(StocksEntry.CONTENT_URI,
                                                 values, selection, selectionargs);
                                         Log.e(LOG_TAG, "Rows updated:" + updatedrows);
 
-                                        Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought!", Toast.LENGTH_LONG).show();
+                                        Toast.makeText(getActivity(), cursor.getString(1) + " successfully bought at Rs. " + boughtprice, Toast.LENGTH_LONG).show();
                                     } else {
                                         Toast.makeText(getActivity(), "You do not have enough funds to buy this stock", Toast.LENGTH_LONG).show();
                                     }
@@ -264,8 +273,8 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
 
                                     m2databaseReference.child("stocksown").child(search).setValue(null);
 
-                                    int curprice = cursor.getInt(2);
-                                    funds = funds + curprice;
+                                    m2databaseReference = mFirebaseDatabase.getReference().child("stocks");
+                                    m2databaseReference.child(search).child("sellcount").setValue(curprice);
 
                                     String selection2 = StocksEntry.COLUMN_CODE + "=?";
 
@@ -277,13 +286,12 @@ public class DashboardFragment extends Fragment implements LoaderManager.LoaderC
                                             values, selection2, selectionArgs);
                                     Log.e(LOG_TAG, "Rows updated:" + updatedrows);
 
-                                    Toast.makeText(getActivity(), cursor.getString(1) + " Sold successfully!", Toast.LENGTH_LONG).show();
+                                    Toast.makeText(getActivity(), cursor.getString(1) + " Sold successfully at Rs. " + curprice, Toast.LENGTH_LONG).show();
 
                                 }
 
                                 @Override
                                 public void onCancelled(@NonNull DatabaseError databaseError) {
-
                                 }
                             });
 
